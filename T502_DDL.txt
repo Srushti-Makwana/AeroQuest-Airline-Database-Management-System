@@ -1,0 +1,236 @@
+DDL Scripts
+						~ Aero Quest Airlines
+
+-- Creating AeroQuest Schema 
+create schema AeroQuest;
+
+-- Setting Search Path to the Schema AeroQuest
+set search_path to AeroQuest; 
+
+
+create table Passengers
+(
+    	passenger_id 		char(9) not null,
+	email        		varchar(30) not null,
+	physical_disability varchar(20) not null,
+	flypoints          	smallint  default 0, 
+	contact_no        	char(10) not null, 
+	date_of_birth       date,      
+	primary key(passenger_id)
+); 
+
+
+create table aircrafts_owned
+(
+	reg_no 		char(10) 		primary key, 
+	fuel   		integer  		not null, 
+	type   		varchar(15) 	not null, 
+	cargo_weight 	integer 		not null, 
+	first_class 	integer 		not null, 
+	business_class integer 		not null, 
+	economy        integer 		not null 
+);
+
+
+
+create table trip
+(
+	trip_id 			char(5) primary key,
+	source  			char(3) not null,
+	layover 			char(3),
+	destination	 	char(3) not null,
+	duration 			time not null,
+	distance 			smallint not null,
+	flight_type 		varchar(30) not null,
+	date_of_departure 	date not null, 
+	aircraft_used  	char(10) not null,
+	foreign key(aircraft_used) references aircrafts_owned(reg_no) on delete cascade on update cascade
+);
+
+
+create table transactions
+(
+	transaction_id char(12) 		primary key, 
+	payment_type   varchar(10)	not null, 
+	amount         smallint    	not null,
+	currency       varchar(15) 	not null, 
+	expiry_of_card date        	not null, 
+	card_number    char(12)    	not null,
+	cvv            varchar(4)  	not null 
+);
+
+
+
+create table unforeseen_events
+(
+	event_code 		char(4) 		primary key,
+	event_description	varchar(50) 	not null,
+	refund_percentage 	smallint 
+);
+create table seat_perks 
+(
+	trip_id 	char(5) 		not null, 
+	amount  	smallint 		not null,
+	currency 	varchar(15) 	not null,
+	class    	varchar(15), 
+	foreign key(trip_id) references trip(trip_id)
+	on delete cascade on update cascade,
+	primary key(trip_id, amount, currency) 
+);
+
+
+create table employee
+(
+	eno 	 	    	 char(9)     primary key, 
+	name 	 	 varchar(30) not null,
+	gender 	 	 varchar(15) not null,
+	salary 	 	 smallint    not null, 
+	employee_points smallint    not null, 
+	date_joined  	 date        not null,
+	date_of_birth   date        not null 
+);
+
+
+create table onboard
+(	
+eno 				char(9) 	not null, 
+	trip_id 			char(5) 	not null,
+	flying_hrs_added 	smallint 	null,
+	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade,
+	foreign key(trip_id) references trip(trip_id)
+	on delete cascade on update cascade,
+	primary key(eno,trip_id)
+);
+create table dependents
+(
+    	eno 			char(9) 		not null, 
+	name 		varchar(15) 	not null,
+	date_of_birth 	date 		not null,
+	gender 		varchar(15) 	not null,
+	contact_no 	char(10) 		not null, 
+	relation 		varchar(15) 	not null,
+	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade
+     primary key(eno,name)
+);
+
+create table airhost 
+(
+    	eno 			char(9) 	not null, 
+	flying_hrs 	integer 	not null,
+	mgr_eno 		char(9) 	not null,
+	incentive 	integer 	not null,
+	foreign key(mgr_eno) references employee(eno)
+	on delete cascade on update cascade,
+	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade,
+	primary key(eno)
+);
+
+create table languages_spoken
+(
+eno 		char(9) 		not null, 
+	languages varchar(15) 	not null,
+    	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade,
+	primary key(eno,languages)
+);
+ 
+create table pilot
+(
+    	eno 		 char(9)  	not null, 
+	rank 	 varchar(15) 	not null,
+	flying_hrs integer 		not null,
+	mgr_eno  	 char(9) 		not null,
+	incentive  integer 		not null,
+	foreign key(mgr_eno) references employee(eno)
+	on delete cascade on update cascade,
+	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade,
+	primary key(eno)
+);
+
+create table manager 
+(
+    	eno 				char(9) 	not null, 
+	aircraft_managed 	char(10) 	not null,
+	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade,
+	foreign key(aircraft_managed) references aircrats_owned(reg_no) on delete cascade on update cascade,
+    	primary key(eno)
+);
+	
+
+create table manager_qualifications 
+(
+ 	eno char(9) not null, 
+	qualifications varchar(10) not null,
+	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade,
+    	primary key(eno,qualifications)
+);
+
+create table surfing
+(
+	passenger_id char(9) not null,
+	trip_id      char(5) not null,
+	cookies_generated integer not null, 
+	foreign key(passenger_id) references passengers(passenger_id)
+	on delete cascade on update cascade, 
+	foreign key(trip_id) references trip(trip_id)
+	on delete cascade on update cascade,
+	primary key(passenger_id,trip_id,cookies_generated)
+);
+
+
+create table booking
+(
+	passenger_id 		char(9) 	  not null,
+	trip_id      		char(5) 	  not null,
+	transaction_id 	char(12) 	  not null,
+	passport_no 		char(12) 	  not null,
+	date_of_expiry 	date 	  not null, 
+	country_of_issue 	varchar(15) not null, 
+	points_rewarded  	smallint 	  not null,
+	foreign key(passenger_id) references passengers(passenger_id)
+	on delete cascade on update cascade, 
+	foreign key(trip_id) references trip(trip_id)
+	on delete cascade on update cascade,
+	foreign key(transaction_id) references transactions(transaction_id)
+	on delete cascade on update cascade,
+	primary key(passenger_id,trip_id,transaction_id)
+);
+
+ 
+create table refund
+(
+	passenger_id 		char(9)  not null,
+	trip_id      		char(5)  not null,
+	transaction_id 	char(12) not null,
+	event_code 		char(4)  not null, 
+	foreign key(passenger_id) references passengers(passenger_id)
+	on delete cascade on update cascade, 
+	foreign key(trip_id) references trip(trip_id)
+	on delete cascade on update cascade,
+	foreign key(transaction_id) references transactions(transaction_id)
+	on delete cascade on update cascade,
+	foreign key(event_code) references unforseen_events(event_code),
+	primary key(passenger_id,trip_id,transaction_id,event_code)
+);
+
+
+create table feedback
+(
+	eno 			char(9) 	not null,
+	trip_id 		char(5) 	not null,
+	passenger_id 	char(9) 	not null, 
+	rating       	smallint 	not null, 
+	foreign key(eno) references employee(eno)
+	on delete cascade on update cascade, 
+	foreign key(passenger_id) references passengers(passenger_id)
+	on delete cascade on update cascade, 
+	foreign key(trip_id) references trip(trip_id)
+	on delete cascade on update cascade,
+	primary key(eno,trip_id,passenger_id)
+);

@@ -1,0 +1,759 @@
+﻿Queries
+
+
+1.
+--Sarah needed to fly from San Francisco to New York City for a crucial meeting on April 20, 2017. Using the airline's website, she quickly found all available flights for that date, ensuring she could select the most suitable option for her schedule.
+
+
+
+
+SELECT * 
+FROM trip 
+WHERE source = 'SFO' 
+AND destination = 'JFK' 
+AND date_of_departure = '2017-04-20';
+
+
+
+
+
+
+2.
+--Emily, a frequent traveler with a preference for luxury, was planning her next vacation. She wanted to find the best deals on first-class flights to ensure a comfortable journey without breaking the bank. Using the airline's website, she searched for the top three least expensive first-class trips available, allowing her to enjoy premium amenities at an affordable price.
+
+
+SELECT t.*, amount 
+FROM trip AS t 
+NATURAL JOIN seat_perks 
+WHERE class = 'First class' 
+ORDER BY amount 
+LIMIT 3;
+
+
+
+
+
+
+
+
+3.
+--On seeing the enthusiastic response of the younger generations to Spotify Wrapped, the airline has decided to increase interaction with their customers by introducing a similar experience for their users which helps them see the total money they spent, how many hours and distance they have traveled with the airline.
+
+
+
+
+SELECT 
+    passenger_id, 
+    SUM(amount) AS total_money_spent, 
+    SUM(distance) AS total_distance, 
+    SUM(duration) AS total_duration 
+FROM 
+    booking 
+NATURAL JOIN 
+    seat_perks 
+NATURAL JOIN 
+    trip 
+NATURAL JOIN 
+    transactions 
+GROUP BY 
+    passenger_id 
+ORDER BY 
+    total_money_spent DESC;
+
+
+
+
+
+
+
+
+
+
+4.
+--Passengers who surf for trips but do not book them.
+
+
+
+
+SELECT p.*
+FROM passengers AS p
+WHERE passenger_id IN (
+    SELECT passenger_id FROM surfing
+    EXCEPT
+    SELECT passenger_id FROM booking
+);
+
+
+
+
+
+
+5.
+--Using the booking systems, the airline staff tracked the number of passengers booked in each class – first class, business class, and premium economy – for every trip. This analysis ensured that seats were optimally filled, guaranteeing a comfortable journey for all travelers.
+
+
+
+
+SELECT t.*, class, COUNT(passenger_id)
+FROM trip AS t
+NATURAL JOIN seat_perks
+NATURAL JOIN booking
+NATURAL JOIN transactions
+GROUP BY class, trip_id
+ORDER BY trip_id;
+
+
+
+
+
+
+6.
+--In the realm of luxury air travel, the occupancy of first-class seats holds significance. Airlines meticulously track trips where fewer than six first-class seats are filled, signaling an opportunity to adjust strategies and entice more passengers to experience the premium cabin.
+
+
+
+
+SELECT t.*, COUNT(passenger_id)
+FROM trip AS t
+NATURAL JOIN seat_perks
+NATURAL JOIN booking
+NATURAL JOIN transactions
+WHERE class = 'First class'
+GROUP BY class, trip_id
+HAVING COUNT(passenger_id) < 6
+ORDER BY trip_id;
+
+
+
+
+
+
+7.
+--Calculate the total revenue from ticket sales, accounting for refunds and unforeseen events, to assess the profitability of each journey.
+
+
+
+
+SELECT b.trip_id, 
+       SUM(amount) AS total_revenue, 
+       SUM(refund_percentage * amount / 100) AS total_refunds, 
+       SUM(amount) - SUM(refund_percentage * amount / 100) AS net_earnings
+FROM booking AS b 
+NATURAL JOIN transactions AS t
+LEFT OUTER JOIN refund AS r ON t.transaction_id = r.transaction_id 
+LEFT OUTER JOIN unforseen_events AS u ON r.event_code = u.event_code
+GROUP BY b.trip_id;
+
+
+
+
+
+
+8.
+--The airline wants to find out how many vacant seats are going in every trip to maximize profit.
+
+
+SELECT trip_id, 
+       (first_class + business_class + economy - COUNT(passenger_id)) AS empty_seats
+FROM booking 
+NATURAL JOIN seat_perks 
+NATURAL JOIN transactions 
+NATURAL JOIN trip AS t  
+JOIN aircrats_owned AS a ON t.aircraft_used = a.reg_no
+GROUP BY trip_id, first_class, business_class, economy;
+
+
+
+
+
+
+9.
+--By analyzing the number of passengers who have shown interest in certain trips through their browsing activity, airlines can identify the most sought-after journeys and tailor offerings to their customers accordingly.
+
+
+
+
+SELECT trip_id, 
+       COUNT(passenger_id) AS surf_count
+FROM surfing
+GROUP BY trip_id
+ORDER BY surf_count DESC
+LIMIT 1;
+
+
+
+
+
+
+10.
+--Dedicated workers who consistently receive high ratings are rewarded for their efforts with a salary boost.
+
+
+
+
+UPDATE employee
+SET salary = salary * 1.1
+WHERE eno IN (
+    SELECT eno
+    FROM feedback
+    GROUP BY eno
+    HAVING AVG(rating) > 5
+);
+
+
+
+
+
+
+
+
+
+
+11.
+--This SQL query provides a snapshot of Emily's travel adventures, summarizing her total distance, trip duration, and expenses per month.
+
+
+SELECT 
+    b.passenger_id, 
+    EXTRACT(MONTH FROM t.date_of_departure) AS departure_month,
+    SUM(t.distance) AS total_distance,
+    SUM(EXTRACT(EPOCH FROM t.duration)) AS total_duration_seconds,
+    SUM(sp.amount) AS total_money_spent
+FROM 
+    booking AS b
+JOIN 
+    trip AS t ON b.trip_id = t.trip_id
+JOIN 
+    seat_perks AS sp ON b.trip_id = sp.trip_id
+    NATURAL JOIN transactions
+GROUP BY 
+    b.passenger_id, departure_month
+ORDER BY 
+    passenger_id;
+
+
+
+
+
+
+12.
+--This query retrieves the names and salaries of pilots who earn more than their managers.
+
+
+
+
+SELECT e.name AS pilot_name, e.salary AS pilot_salary, e2.name AS manager_name, e2.salary AS manager_salary
+FROM pilot AS p
+JOIN employee AS e ON p.eno = e.eno 
+JOIN manager AS m ON p.mgr_eno = m.eno 
+JOIN employee AS e2 ON m.eno = e2.eno 
+WHERE e.salary > e2.salary;
+
+
+
+
+
+
+13.
+--This query counts the number of languages spoken by crew members on each trip. It provides insight into the linguistic diversity among the crew members for each trip.
+
+
+
+
+SELECT 
+    t.trip_id,
+    COUNT(DISTINCT ls.languages) AS num_languages_spoken
+FROM 
+    trip t
+JOIN 
+    onboard o ON t.trip_id = o.trip_id
+JOIN 
+    employee e ON o.eno = e.eno
+JOIN 
+    languages_spoken ls ON e.eno = ls.eno
+GROUP BY 
+    t.trip_id;
+
+
+
+
+
+
+14.
+--This query retrieves information about passengers who require special assistance during their travels. It selects passengers whose physical disability status is not "None," providing valuable data for airlines to ensure the comfort and accessibility of passengers with special needs.
+
+
+
+
+SELECT 
+    passenger_id, 
+    email, 
+    contact_no
+FROM 
+    Passengers
+WHERE 
+    physical_disability != 'None';
+
+
+
+
+
+
+15.
+--In the bustling airport hub, Flight Manager Kate reviews passenger data with her team. They query trips with passengers requiring special assistance, ensuring every flight accommodates diverse needs for a seamless travel experience.
+
+
+
+
+SELECT 
+    trip_id,
+    physical_disability,
+    COUNT(passenger_id)
+FROM 
+    passengers AS p
+NATURAL JOIN 
+    booking 
+WHERE 
+    physical_disability != 'None'
+GROUP BY 
+    trip_id,
+    physical_disability
+ORDER BY 
+    trip_id;
+
+
+
+
+
+
+
+
+
+
+16.
+--In a bustling aviation company, HR conducted a gender-wise salary analysis. The findings showcased the workforce's makeup, revealing insights into each gender's average, minimum, maximum, and total salaries, aiding in equitable compensation practices.
+
+
+
+
+SELECT 
+    gender, 
+    COUNT(*) AS total_employees,
+    AVG(salary) AS average_salary,
+    MIN(salary) AS min_salary,
+    MAX(salary) AS max_salary,
+    SUM(salary) AS total_salary
+FROM 
+    employee
+GROUP BY 
+    gender;
+
+
+
+
+
+
+17.
+--In an aviation firm, the HR department analyzed pilot salaries based on their ranks. The report provided insights into the number of pilots, along with their average, minimum, maximum, and total salaries per rank, aiding in understanding the compensation structure.
+
+
+
+
+SELECT 
+    rank,
+    COUNT(*) AS total_pilots,
+    AVG(salary) AS average_salary,
+    MIN(salary) AS min_salary,
+    MAX(salary) AS max_salary,
+    SUM(salary) AS total_salary
+FROM 
+    pilot
+NATURAL JOIN 
+    employee
+GROUP BY 
+    rank;
+
+
+
+
+
+
+18.
+--While preparing for a trip from Delhi, the airline wanted to ensure special assistance for passengers who booked all flights from Delhi. This query helped identify passengers for tailored support based on their comprehensive travel history.
+
+
+
+
+SELECT p.passenger_id, p.email, p.date_of_birth, p.physical_disability
+FROM Passengers p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Trip t
+    WHERE t.source = 'DEL'
+    AND NOT EXISTS (
+        SELECT 1
+        FROM Booking b
+        WHERE b.passenger_id = p.passenger_id
+        AND b.trip_id = t.trip_id
+    )
+);
+
+
+
+
+
+
+19.
+Meet Captain John, a seasoned pilot at AeroQuest Airlines. Curious about his pilots' performance, the airline manager queries for pilots who've flown to every destination, especially Delhi. This helps ensure thorough service coverage and assess pilot efficiency.
+
+
+SELECT e.eno, e.name, e.gender, e.salary
+FROM Employee e
+WHERE e.eno IN (
+    SELECT p.eno
+    FROM Pilot p
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM Trip t
+        WHERE t.destination = 'DEL'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Onboard o
+            WHERE o.eno = p.eno
+            AND o.trip_id = t.trip_id
+        )
+    )
+);
+
+
+
+
+
+
+20.
+In a bustling aviation company, HR analyzed pilot salaries based on their flying hours intervals. The report provided insights into the number of pilots falling into each interval, along with their average, minimum, maximum, and total salaries, aiding in understanding compensation distribution among pilots
+
+
+
+
+SELECT 
+    CASE 
+        WHEN flying_hrs BETWEEN 0 AND 500 THEN '0-500 hrs'
+        WHEN flying_hrs BETWEEN 501 AND 1000 THEN '501-1000 hrs'
+        WHEN flying_hrs BETWEEN 1001 AND 1500 THEN '1001-1500 hrs'
+        WHEN flying_hrs BETWEEN 1501 AND 2000 THEN '1501-2000 hrs'
+        ELSE '2001+ hrs'
+    END AS flying_hours_interval,
+    COUNT(*) AS total_pilots,
+    AVG(salary) AS average_salary,
+    MIN(salary) AS min_salary,
+    MAX(salary) AS max_salary,
+    SUM(salary) AS total_salary
+FROM 
+    pilot
+JOIN 
+    employee ON pilot.eno = employee.eno
+GROUP BY 
+    flying_hours_interval
+ORDER BY 
+    MIN(flying_hrs);
+
+
+
+
+
+
+21.
+In a busy travel agency, managers categorized flights based on their durations for better analysis. They classified flights into short, medium, and long-haul categories, providing insights into the distribution of flights across different duration intervals
+
+
+
+
+SELECT 
+    CASE 
+        WHEN duration <= '02:00:00' THEN 'Short Haul (<= 2 hours)'
+        WHEN duration > '02:00:00' AND duration <= '06:00:00' THEN 'Medium Haul (2-6 hours)'
+        ELSE 'Long Haul (> 6 hours)'
+    END AS flight_duration_category,
+    COUNT(*) AS total_flights
+FROM 
+    trip
+GROUP BY 
+    flight_duration_category;
+
+
+
+
+
+
+22.
+--In an airline operations dashboard, this query calculates the percentage of flights that involve layovers. It helps airline management assess the prevalence of layovers in their flight schedules, providing insights into passenger experience and operational efficiency.
+
+
+SELECT 
+    SUM(CASE WHEN layover IS NOT NULL THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS layover_percentage
+FROM 
+    trip;
+
+
+
+
+
+
+23.
+--For an airline's analytics platform, this query computes the average duration of flights categorized by their types such as domestic, international, or cargo. It aids in understanding the typical duration of different flight types, assisting in route planning and scheduling optimizations.
+
+
+
+
+SELECT 
+    flight_type,
+    AVG(EXTRACT(EPOCH FROM duration)) / 3600 AS avg_duration_hours
+FROM 
+    trip
+GROUP BY 
+    flight_type;
+
+
+
+
+
+
+24.
+--In a passenger management system for an airline, this query retrieves detailed information about passengers who have booked a specific trip identified by the trip ID 'T0002'. It assists in providing personalized services and managing passenger data for the specified trip.
+
+
+
+
+SELECT p.passenger_id, p.email, p.date_of_birth, p.physical_disability
+FROM passengers p
+JOIN booking b ON p.passenger_id = b.passenger_id
+WHERE b.trip_id = 'T0002';
+
+
+
+
+
+
+25.
+--In an aviation company's operations management system, this query fetches trip details along with the assigned manager for each trip. It helps in tracking trips, monitoring managerial responsibilities, and ensuring efficient allocation of resources for aircraft operations.
+
+
+
+
+SELECT t.trip_id, t.source, t.destination,eno
+FROM trip t
+JOIN manager m ON t.aircraft_used = m.aircraft_managed
+order by trip_id;
+
+
+
+
+
+
+26.
+This query identifies passengers who prefer credit payments over debit for booking flights. It helps airlines tailor their payment options, ensuring flexibility and convenience for passengers while optimizing revenue collection through preferred payment methods.
+
+
+
+
+SELECT p.passenger_id, p.email, p.date_of_birth, p.physical_disability
+FROM Passengers p
+WHERE passenger_id not in (
+    SELECT passenger_id
+    FROM Booking as b
+        natural join transactions as t
+    where t.payment_type = 'Debit'
+);
+
+
+
+
+
+
+27.
+This query retrieves employee numbers (enos) of those who received an average rating higher than the overall average rating for trip T0005. It helps identify employees who consistently deliver exceptional service, enabling airlines to recognize and reward their exemplary performance, fostering a culture of excellence and customer satisfaction.
+
+
+
+
+SELECT DISTINCT eno
+FROM feedback
+WHERE trip_id = 'T0005'
+GROUP BY eno
+HAVING AVG(rating) > (
+    SELECT AVG(rating)
+    FROM feedback
+    WHERE trip_id = 'T0005'
+);
+
+
+
+
+
+
+28.
+This query generates a report listing employees along with their details such as employee number, name, gender, salary, date joined, and date of birth. Additionally, it calculates each employee's years of experience in the company and assigns an incentive level based on their tenure. This report helps HR and management identify long-serving employees eligible for various incentives, fostering employee retention and motivation.
+
+
+
+
+SELECT 
+    eno,
+    name,
+    gender,
+    salary,
+    date_joined,
+    date_of_birth,
+    EXTRACT(YEAR FROM age(CURRENT_DATE, date_joined)) AS years_of_experience,
+    CASE 
+        WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_joined)) >= 5 THEN 'High Incentive'
+        WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, date_joined)) >= 3 THEN 'Medium Incentive'
+        ELSE 'Low Incentive'
+    END AS incentive
+FROM 
+    employee
+ORDER BY 
+    years_of_experience DESC;
+
+
+
+
+
+
+
+
+29.
+This query retrieves the top 5 trips with the highest total revenue generated from ticket sales. By summing the transaction amounts for each trip, the airline can identify its most profitable flights. This information is valuable for optimizing pricing strategies, identifying popular routes, and allocating resources effectively to maximize revenue.
+
+
+
+
+SELECT trip_id, 
+       SUM(amount) AS total_revenue
+FROM booking
+NATURAL JOIN transactions
+GROUP BY trip_id
+ORDER BY total_revenue DESC
+LIMIT 5;
+
+
+
+
+
+
+30.
+This query retrieves employees who have been with the company for more than 10 years. It's useful for identifying long-serving employees who may have valuable experience and institutional knowledge. Companies can use this information for recognizing employee loyalty, planning succession strategies, and rewarding tenure-based achievements.
+
+
+
+
+SELECT eno, name, date_joined
+FROM employee
+WHERE EXTRACT(YEAR FROM age(CURRENT_DATE, date_joined)) > 10;
+
+
+
+
+
+
+31.
+This query calculates the total cargo weight across all aircraft owned by the airline. It provides valuable information for logistics planning, ensuring that the airline's fleet can accommodate the cargo demands of its operations. This data can also be used for capacity management, resource allocation, and cost analysis related to cargo transportation.
+
+
+
+
+SELECT SUM(cargo_weight) AS total_cargo_weight
+FROM aircrats_owned;
+
+
+
+
+
+
+32.
+This query retrieves trip details for flights with a layover at JFK (John F. Kennedy International Airport). It is useful for airline staff responsible for managing layover logistics, such as coordinating ground services, scheduling connecting flights, and informing passengers about layover durations and facilities available at JFK Airport.
+
+
+
+
+SELECT trip_id, source, destination, layover
+FROM trip
+WHERE layover = 'JFK';
+
+
+
+
+33.
+This query retrieves information about employees who speak multiple languages. It is useful for HR departments or language proficiency assessment teams in multinational companies to identify multilingual employees who can assist in communication with clients, customers, or colleagues who speak different languages.
+
+
+
+
+SELECT e.eno, e.name, e.gender, STRING_AGG(ls.languages, ', ') AS spoken_languages
+FROM employee e
+JOIN languages_spoken ls ON e.eno = ls.eno
+GROUP BY e.eno, e.name, e.gender
+HAVING COUNT(*) > 1;
+
+
+
+
+
+
+34.
+This query provides insights into employee performance based on feedback ratings. It is valuable for HR departments or management teams to evaluate employee satisfaction and identify areas for improvement. By categorizing feedback ratings, organizations can recognize exceptional performance, address concerns, and enhance overall employee engagement.
+
+
+
+
+SELECT 
+    e.eno, 
+    e.name, 
+    e.gender, 
+    AVG(f.rating) AS avg_rating,
+    CASE 
+        WHEN AVG(f.rating) >= 8 THEN 'Excellent'
+        WHEN AVG(f.rating) >= 6 THEN 'Good'
+        WHEN AVG(f.rating) >= 4 THEN 'Average'
+        ELSE 'Below Average'
+    END AS feedback_category
+FROM 
+    employee e
+JOIN 
+    feedback f ON e.eno = f.eno
+GROUP BY 
+    e.eno, e.name, e.gender
+ORDER BY
+avg_rating DESC;
+        
+
+
+
+
+35.
+This query is helpful for airlines to identify high-value passengers who frequently book flights and spend significant amounts on tickets. By analyzing the total number of trips booked, average seat price, and total spent on tickets for each passenger, airlines can segment their customers and tailor marketing strategies, loyalty programs, or personalized offers to enhance customer retention and satisfaction.
+
+
+
+
+SELECT 
+    p.passenger_id,
+    p.email,
+    COUNT(DISTINCT b.trip_id) AS total_trips_booked,
+    AVG(sp.amount) AS avg_seat_price,
+    SUM(t.amount) AS total_spent_on_tickets
+FROM 
+    passengers p
+JOIN 
+    booking b ON p.passenger_id = b.passenger_id
+JOIN 
+    transactions t ON b.transaction_id = t.transaction_id
+JOIN 
+    seat_perks sp ON b.trip_id = sp.trip_id
+GROUP BY 
+    p.passenger_id, p.email
+HAVING 
+    COUNT(DISTINCT b.trip_id) > 5
+ORDER BY 
+    total_spent_on_tickets DESC;

@@ -44,6 +44,3 @@ All relations are:
 
 Full documentation is available in [`docs/Normalization.pdf`](docs/Normalization.pdf).
 
----
-
-## 📂 File Structure

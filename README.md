@@ -1,32 +1,49 @@
-✈️ AeroQuest Airlines Database Management System
-🚀 Overview
-This project is a Database Management System (DBMS) designed for AeroQuest Airlines, built using PostgreSQL.
-It manages end-to-end airline operations from flights and passengers to employees, bookings, and refunds.
+# ✈️ AeroQuest Airlines Database Management System
 
-All tables are normalized up to BCNF, ensuring data consistency and minimal redundancy.
-The project also features complex analytical queries to generate business insights.
+## 🚀 Overview
+AeroQuest Airlines DBMS is a comprehensive **Database Management System** built using **PostgreSQL**. It manages **end-to-end airline operations** — including flight scheduling, passenger management, employee records, bookings, refunds, and more.
 
-🏗️ Tech Stack
-PostgreSQL schema design, data population, analytics.
-Dia — for ER diagram design and visualization.
-SQL — all scripts in .sql format for easy execution.
-📊 Features & Highlights
-Passengers: Details, disabilities, frequent flyer points.
-Aircraft Fleet: Specs & seating capacities.
-Trips: Schedules flights with aircraft, distance, duration.
-Bookings & Transactions: Ticket purchases linked with payments.
-Surfing: Tracks browsing data to analyze demand.
-Refunds & Events: Handles partial refunds for disruptions.
-Employees: Pilots, airhosts, managers, flying hours & salaries.
-Feedback: Passenger ratings of crew members.
-🔍 Key Analytical Queries
-This project includes a rich set of insights, such as: ✅ Trips most browsed but not booked (to identify untapped demand).
-✅ Total revenue, refunds, and net earnings by trip.
-✅ Find trips with most vacant seats (for pricing strategy).
-✅ Identify passengers requiring special assistance.
-✅ Pilot salary analysis by rank & flying hours.
-✅ Monthly passenger summaries — like a "Spotify Wrapped" for travelers.
+All tables are normalized up to **BCNF**, ensuring data consistency and minimizing redundancy. The project also features **complex analytical SQL queries** that generate actionable business insights.
 
-📝 Normalization
-All tables analyzed for Functional Dependencies, minimal FD sets, and proven to be in BCNF.
-Full documentation in docs/Normalization.pdf.
+---
+
+## 🏗️ Tech Stack
+- **PostgreSQL** – Schema design, data population, and analytical querying  
+- **Dia** – ER diagram creation and visualization  
+- **SQL scripts** – All code in `.sql` format for easy execution and replication
+
+---
+
+## 📊 Features & Highlights
+- **Passengers**: Personal info, disability support, and frequent flyer points  
+- **Aircraft Fleet**: Aircraft specifications and seating capacities  
+- **Trips**: Scheduled flights with aircraft type, distance, and duration  
+- **Bookings & Transactions**: Ticketing system with integrated payments  
+- **Surfing Data**: Tracks user browsing behavior to analyze demand  
+- **Refunds & Events**: Manages full/partial refunds for disrupted trips  
+- **Employees**: Tracks pilots, airhosts, managers, flying hours, and salaries  
+- **Feedback**: Passenger reviews and crew member ratings
+
+---
+
+## 🔍 Key Analytical Queries
+- ✅ Identify trips that are frequently browsed but never booked (untapped demand)  
+- ✅ Compute total revenue, refunds, and net earnings per trip  
+- ✅ Find trips with the most vacant seats to aid in dynamic pricing strategies  
+- ✅ List passengers who require special assistance  
+- ✅ Analyze pilot salaries by rank and total flying hours  
+- ✅ Generate monthly summaries of passenger travel – like a "Spotify Wrapped" for flyers
+
+---
+
+## 📝 Normalization
+All relations are:
+- Analyzed for **Functional Dependencies (FDs)**  
+- Reduced to **minimal FD sets**  
+- Verified to be in **Boyce-Codd Normal Form (BCNF)**  
+
+Full documentation is available in [`docs/Normalization.pdf`](docs/Normalization.pdf).
+
+---
+
+## 📂 File Structure
